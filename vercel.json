@@ -1,17 +1,6 @@
-{
-  "builds": [
-    {
-      "src": "WormGPT.html",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "public"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/WormGPT.html"
-    }
-  ]
-}
+"builds": [
+  {
+    "src": "index.html",
+    "use": "@vercel/static"
+  }
+]
