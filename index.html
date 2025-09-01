@@ -1,32 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WormGPT</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Prevent scrollbars from the main page */
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none; /* Remove default iframe border */
-            display: block; /* Remove extra space below iframe */
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>ZeroxAI – Quick Chat</title>
+  <style>
+    /* --- Chat UI --- */
+    body{
+      margin:0;
+      font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:#f3f5f7;
+      display:flex;
+      flex-direction:column;
+      height:100vh;
+    }
+    #chat{
+      flex:1;
+      overflow-y:auto;
+      padding:1rem;
+      display:flex;
+      flex-direction:column;
+      gap:.75rem;
+    }
+    .bubble{
+      max-width:70%;
+      padding:.75rem 1rem;
+      border-radius:1rem;
+      line-height:1.4;
+      word-wrap:break-word;
+    }
+    .user{
+      align-self:flex-end;
+      background:#0078ff;
+      color:#fff;
+    }
+    .ai{
+      align-self:flex-start;
+      background:#e5e5ea;
+      color:#000;
+    }
+    #typing{
+      align-self:flex-start;
+      font-size:.85rem;
+      color:#666;
+      margin-left:1rem;
+      display:none;
+    }
+    /* --- Input bar --- */
+    #controls{
+      display:flex;
+      border-top:1px solid #ddd;
+      background:#fff;
+    }
+    #msg{
+      flex:1;
+      border:none;
+      padding:1rem;
+      font-size:1rem;
+      outline:none;
+    }
+    #send{
+      border:none;
+      background:#0078ff;
+      color:#fff;
+      padding:0 1.25rem;
+      cursor:pointer;
+    }
+    #send:disabled{
+      background:#9ec8ff;
+      cursor:not-allowed;
+    }
+  </style>
 </head>
+
 <body>
-    <!-- The iframe will take up the entire viewport -->
-    <iframe src="https://llamacoder.together.ai/share/v2/78qoOavxfEJLQCSl" title="WormGPT">
-        <!-- Fallback content if the browser doesn't support iframes -->
-        <p>Your browser does not support iframes. Please visit the link directly:
-            <a href="https://llamacoder.together.ai/share/v2/78qoOavxfEJLQCSl" target="_blank" rel="noopener noreferrer">WormGPT</a>
-        </p>
-    </iframe>
+  <div id="chat">
+    <div class="bubble ai">Hi! I'm ZeroxAI. Ask me anything.</div>
+    <span id="typing">typing…</span>
+  </div>
+
+  <div id="controls">
+    <input id="msg" placeholder="Type your message…" autocomplete="off" />
+    <button id="send">Send</button>
+  </div>
+
+  <!-- Puter SDK -->
+  <script src="https://js.puter.com/v2/"></script>
+  <script>
+    // --- DOM shortcuts ---
+    const chat   = document.getElementById('chat');
+    const msgBox = document.getElementById('msg');
+    const sendBtn= document.getElementById('send');
+    const typing = document.getElementById('typing');
+
+    // --- Helpers ---
+    const addBubble = (text, cls) => {
+      const div = document.createElement('div');
+      div.className = `bubble ${cls}`;
+      div.textContent = text;
+      chat.insertBefore(div, typing);
+      chat.scrollTop = chat.scrollHeight;
+    };
+
+    // --- Send message ---
+    const sendMsg = async () => {
+      const text = msgBox.value.trim();
+      if(!text) return;
+
+      // User bubble
+      addBubble(text, 'user');
+      msgBox.value = '';
+      sendBtn.disabled = true;
+      typing.style.display = 'inline';
+
+      try{
+        const response = await puter.ai.chat(text, {
+          model: 'openrouter:cognitivecomputations/dolphin-mistral-24b-venice-edition:free'
+        });
+        addBubble(response, 'ai');
+      }catch(err){
+        addBubble('Oops! Something went wrong: ' + err.message, 'ai');
+      }finally{
+        typing.style.display = 'none';
+        sendBtn.disabled = false;
+        msgBox.focus();
+      }
+    };
+
+    // --- Event listeners ---
+    sendBtn.onclick = sendMsg;
+    msgBox.addEventListener('keydown', e => {
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendMsg();
+      }
+    });
+  </script>
 </body>
 </html>
